@@ -17,12 +17,12 @@ func testSqlite(users []*User) {
 	assertResultError(db.Exec(setupText))
 
 	var beginning = time.Now()
-	for i := 0; i < len(users); i++ {
+	for _, user := range users {
 		assertResultError(db.Exec("INSERT INTO users (name, passwordHash, email, createdAt, level) VALUES (?, ?, ?, ?, ?)",
-			users[i].Name, users[i].PasswordHash, users[i].Email, users[i].CreatedAt, users[i].Level))
+			user.Name, user.PasswordHash, user.Email, user.CreatedAt, user.Level))
 	}
-	var elapsed = time.Since(beginning)
 	db.Close()
+	var elapsed = time.Since(beginning)
 
 	db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
 	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()

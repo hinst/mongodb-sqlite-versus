@@ -12,9 +12,18 @@ func main() {
 	var users = generateRandomUsers(rowCount)
 	fmt.Printf("Testing rows [%v]\n", len(users))
 
-	time.Sleep(100 * time.Millisecond)
-	testJson(users)
+	if false {
+		time.Sleep(100 * time.Millisecond)
+		testJson(users)
+	}
 
-	time.Sleep(100 * time.Millisecond)
-	testSqlite(users)
+	if false {
+		time.Sleep(100 * time.Millisecond)
+		testSqlite(users)
+	}
+
+	if true {
+		time.Sleep(100 * time.Millisecond)
+		testMongo(users)
+	}
 }
