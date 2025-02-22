@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
+	"path/filepath"
 
 	humanize "github.com/dustin/go-humanize"
 )
+
+var executablePath = filepath.Dir(assertResultError(os.Executable()))
 
 const (
 	OS_READ        = 04
