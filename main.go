@@ -2,12 +2,19 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	const rowCount = 1_000_000
 	fmt.Println("STARTING")
-	testSqlite(rowCount)
+	const rowCount = 100_000
+	var users = generateRandomUsers(rowCount)
+
+	time.Sleep(100 * time.Millisecond)
+	testJson(users)
+
+	time.Sleep(100 * time.Millisecond)
+	testSqlite(users)
 }

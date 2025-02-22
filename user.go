@@ -7,25 +7,25 @@ import (
 )
 
 type User struct {
-	name         string
-	passwordHash string
-	email        string
-	createdAt    time.Time
-	level        int
+	Name         string    `json:"name"`
+	PasswordHash string    `json:"passwordHash"`
+	Email        string    `json:"email"`
+	CreatedAt    time.Time `json:"createdAt"`
+	Level        int       `json:"level"`
 }
 
 func (this *User) randomize() {
 	var qualityWord = QUALITY_WORDS[rand.IntN(len(QUALITY_WORDS))]
 	var animalName = ANIMAL_NAMES[rand.IntN(len(ANIMAL_NAMES))]
 	var index = rand.IntN(1000)
-	this.name = qualityWord + " " + animalName + " " + strconv.Itoa(index)
-	this.passwordHash = ""
+	this.Name = qualityWord + " " + animalName + " " + strconv.Itoa(index)
+	this.PasswordHash = ""
 	for i := 0; i < 4; i++ {
-		this.passwordHash += strconv.Itoa(rand.Int())
+		this.PasswordHash += strconv.Itoa(rand.Int())
 	}
-	this.email = strconv.Itoa(rand.Int()) + "@" + strconv.Itoa(rand.Int()) + ".com"
-	this.createdAt = time.Now()
-	this.level = rand.IntN(100)
+	this.Email = strconv.Itoa(rand.Int()) + "@" + strconv.Itoa(rand.Int()) + ".com"
+	this.CreatedAt = time.Now()
+	this.Level = rand.IntN(100)
 }
 
 func generateRandomUsers(count int) []*User {
