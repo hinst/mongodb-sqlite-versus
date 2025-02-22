@@ -1,18 +1,21 @@
 package main
 
-func AssertError(err error) {
+func assertError(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-func AssertResultError[T any](result T, err error) T {
-	AssertError(err)
+func assertResultError[T any](result T, err error) T {
+	assertError(err)
 	return result
 }
 
-func AssertCondition(condition bool, message string) {
+func assertCondition(condition bool, message string) {
 	if !condition {
 		panic(message)
 	}
+}
+
+func use(v any) {
 }
