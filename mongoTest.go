@@ -10,28 +10,29 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func testMongo(users []*User) {
-	var clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
-
-	// Connect to MongoDB
-	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
-	client.Database("test").Drop(context.Background())
-	time.Sleep(100 * time.Millisecond)
-
+func testMongo(users []*User, threadCount int) {
 	var beginning = time.Now()
-	var db = client.Database("test")
-	for _, user := range users {
-		assertResultError(db.Collection("users").InsertOne(context.Background(), user))
+	var usersChannel = make(chan *User)
+	for i := 0; i < threadCount; i++ {
+		go func() {
+			writeUsers(usersChannel)
+		}()
 	}
-	assertError(client.Disconnect(context.TODO()))
+	for _, user := range users {
+		usersChannel <- user
+	}
+	close(usersChannel)
 	var elapsed = time.Since(beginning)
 
-	client = assertResultError(mongo.Connect(context.Background(), clientOptions))
-	db = client.Database("test")
+	var clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
+	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
+	defer func() {
+		assertError(client.Disconnect(context.Background()))
+	}()
+	var db = client.Database("test")
 	db.RunCommand(context.Background(), bson.M{"compact": "users"})
 	time.Sleep(10 * time.Second)
 	var stats = getMongoDbStats(db)
-	client.Disconnect(context.Background())
 
 	fmt.Printf("MongoDB time: %v, size: %v -> %v\n", elapsed,
 		formatFileSize(int64(stats.dataSize)), formatFileSize(int64(stats.storageSize)))

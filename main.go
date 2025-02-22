@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	const rowCount = 1_000_000
+	const rowCount = 100_000
 	var users = generateRandomUsers(rowCount)
 	fmt.Printf("Testing rows [%v]\n", len(users))
 
@@ -19,5 +19,5 @@ func main() {
 	testSqlite(users)
 
 	time.Sleep(100 * time.Millisecond)
-	testMongo(users)
+	testMongo(users, 4)
 }
