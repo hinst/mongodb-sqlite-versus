@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	const rowCount = 1_000_000
 	fmt.Println("STARTING")
-	testSqlite()
+	testSqlite(rowCount)
 }
