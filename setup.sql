@@ -6,5 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     passwordHash TEXT NOT NULL,
     email TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    level INTEGER NOT NULL,
+    level INTEGER NOT NULL
 );
+
+VACUUM;

@@ -1,0 +1,1 @@
+Let's start with SQLite and see how it performs. An empty database with one table in it, but no rows, takes 12 kilobytes.
