@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
+
+	humanize "github.com/dustin/go-humanize"
 )
 
 const (
@@ -55,4 +58,8 @@ func writeStringToFile(path string, text string) {
 func writeJsonToFile(path string, obj any) {
 	var bytes = assertResultError(json.MarshalIndent(obj, "", "\t"))
 	assertError(os.WriteFile(path, bytes, OS_USER_RW))
+}
+
+func formatFileSize(size int64) string {
+	return humanize.BigIBytes(big.NewInt(size))
 }

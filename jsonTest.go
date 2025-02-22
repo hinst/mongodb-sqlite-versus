@@ -12,5 +12,5 @@ func testJson(users []*User) {
 	writeJsonToFile(JSON_FILE_PATH, users)
 	var elapsed = time.Since(beginning)
 	var fileInfo = assertResultError(os.Stat(JSON_FILE_PATH))
-	fmt.Printf("JSON rows: [%d], time: %v, file size: %d\n", len(users), elapsed, fileInfo.Size())
+	fmt.Printf("JSON time: %v, file size: %v\n", elapsed, formatFileSize(fileInfo.Size()))
 }

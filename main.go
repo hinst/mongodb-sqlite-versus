@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	fmt.Println("STARTING")
 	const rowCount = 100_000
 	var users = generateRandomUsers(rowCount)
+	fmt.Printf("Testing rows [%v]\n", len(users))
 
 	time.Sleep(100 * time.Millisecond)
 	testJson(users)

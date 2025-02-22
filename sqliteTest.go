@@ -28,5 +28,5 @@ func testSqlite(users []*User) {
 	db.Close()
 
 	var fileInfo = assertResultError(os.Stat(DB_FILE_PATH))
-	fmt.Printf("SQLite rows: [%d], time: %v, file size: %d\n", len(users), elapsed, fileInfo.Size())
+	fmt.Printf("SQLite time: %v, file size: %v\n", elapsed, formatFileSize(fileInfo.Size()))
 }
