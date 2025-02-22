@@ -8,22 +8,16 @@ import (
 )
 
 func main() {
-	const rowCount = 100_000
+	const rowCount = 1_000_000
 	var users = generateRandomUsers(rowCount)
 	fmt.Printf("Testing rows [%v]\n", len(users))
 
-	if false {
-		time.Sleep(100 * time.Millisecond)
-		testJson(users)
-	}
+	time.Sleep(100 * time.Millisecond)
+	testJson(users)
 
-	if false {
-		time.Sleep(100 * time.Millisecond)
-		testSqlite(users)
-	}
+	time.Sleep(100 * time.Millisecond)
+	testSqlite(users)
 
-	if true {
-		time.Sleep(100 * time.Millisecond)
-		testMongo(users)
-	}
+	time.Sleep(100 * time.Millisecond)
+	testMongo(users)
 }

@@ -58,8 +58,13 @@ func writeStringToFile(path string, text string) {
 	assertError(os.WriteFile(path, []byte(text), OS_USER_RW))
 }
 
-func writeJsonToFile(path string, obj any) {
-	var bytes = assertResultError(json.MarshalIndent(obj, "", "\t"))
+func writeJsonToFile(path string, indent bool, obj any) {
+	var bytes []byte
+	if indent {
+		bytes = assertResultError(json.MarshalIndent(obj, "", "\t"))
+	} else {
+		bytes = assertResultError(json.Marshal(obj))
+	}
 	assertError(os.WriteFile(path, bytes, OS_USER_RW))
 }
 

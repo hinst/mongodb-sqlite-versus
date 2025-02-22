@@ -3,15 +3,16 @@ package main
 import (
 	"math/rand/v2"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type User struct {
-	Name         string    `json:"name"`
-	PasswordHash string    `json:"passwordHash"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"createdAt"`
-	Level        int       `json:"level"`
+	Name         string    `json:"name"`         // bson:"n"
+	PasswordHash string    `json:"passwordHash"` // bson:"ph"
+	Email        string    `json:"email"`        //bson:"e"
+	CreatedAt    time.Time `json:"createdAt"`    // bson:"ca"
+	Level        int       `json:"level"`        // bson:"l"
 }
 
 func (this *User) randomize() {
@@ -23,7 +24,7 @@ func (this *User) randomize() {
 	for i := 0; i < 4; i++ {
 		this.PasswordHash += strconv.Itoa(rand.Int())
 	}
-	this.Email = strconv.Itoa(rand.Int()) + "@" + strconv.Itoa(rand.Int()) + ".com"
+	this.Email = qualityWord + "@" + strings.ToLower(animalName) + ".com"
 	this.CreatedAt = time.Now()
 	this.Level = rand.IntN(100)
 }

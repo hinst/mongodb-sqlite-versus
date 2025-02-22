@@ -26,16 +26,13 @@ func testMongo(users []*User) {
 	assertError(client.Disconnect(context.TODO()))
 	var elapsed = time.Since(beginning)
 
-	time.Sleep(1000 * time.Millisecond)
 	client = assertResultError(mongo.Connect(context.Background(), clientOptions))
 	db = client.Database("test")
-	var sizeBeforeCompact = getMongoDbSize(db)
 	db.RunCommand(context.Background(), bson.M{"compact": "users"})
-	time.Sleep(1000 * time.Millisecond)
-	var sizeAfterCompact = getMongoDbSize(db)
-
+	time.Sleep(10 * time.Second)
+	var stats = getMongoDbStats(db)
 	client.Disconnect(context.Background())
 
 	fmt.Printf("MongoDB time: %v, size: %v -> %v\n", elapsed,
-		formatFileSize(sizeBeforeCompact), formatFileSize(sizeAfterCompact))
+		formatFileSize(int64(stats.dataSize)), formatFileSize(int64(stats.storageSize)))
 }

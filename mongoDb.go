@@ -7,10 +7,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func getMongoDbSize(db *mongo.Database) int64 {
+type MongoDbStats struct {
+	dataSize    float64
+	storageSize float64
+}
+
+func getMongoDbStats(db *mongo.Database) MongoDbStats {
 	var statsResult = db.RunCommand(context.Background(), bson.M{"dbStats": 1})
 	var stats bson.M
 	assertError(statsResult.Decode(&stats))
-	var storageSize = stats["storageSize"].(float64)
-	return int64(storageSize)
+	return MongoDbStats{
+		dataSize:    stats["dataSize"].(float64),
+		storageSize: stats["storageSize"].(float64),
+	}
 }
