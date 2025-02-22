@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	const rowCount = 100_000
+	const rowCount = 1_000_000
+	const threadCount = 4
 	var users = generateRandomUsers(rowCount)
 	fmt.Printf("Testing rows [%v]\n", len(users))
 
@@ -16,8 +17,8 @@ func main() {
 	testJson(users)
 
 	time.Sleep(100 * time.Millisecond)
-	testSqlite(users)
+	testSqlite(users, threadCount)
 
 	time.Sleep(100 * time.Millisecond)
-	testMongo(users, 4)
+	testMongo(users, threadCount)
 }

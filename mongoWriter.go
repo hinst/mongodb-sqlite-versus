@@ -8,7 +8,8 @@ import (
 )
 
 func writeUsers(users chan *User) {
-	var clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
+	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
+	clientOptions.Compressors = []string{"snappy"}
 	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
 	defer func() {
 		assertError(client.Disconnect(context.Background()))

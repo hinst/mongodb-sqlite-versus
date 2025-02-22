@@ -15,18 +15,18 @@ type User struct {
 	Level        int       `json:"level"`        // bson:"l"
 }
 
-func (this *User) randomize() {
+func (me *User) randomize() {
 	var qualityWord = QUALITY_WORDS[rand.IntN(len(QUALITY_WORDS))]
 	var animalName = ANIMAL_NAMES[rand.IntN(len(ANIMAL_NAMES))]
 	var index = rand.IntN(1000)
-	this.Name = qualityWord + " " + animalName + " " + strconv.Itoa(index)
-	this.PasswordHash = ""
+	me.Name = qualityWord + " " + animalName + " " + strconv.Itoa(index)
+	me.PasswordHash = ""
 	for i := 0; i < 4; i++ {
-		this.PasswordHash += strconv.Itoa(rand.Int())
+		me.PasswordHash += strconv.Itoa(rand.Int())
 	}
-	this.Email = qualityWord + "@" + strings.ToLower(animalName) + ".com"
-	this.CreatedAt = time.Now()
-	this.Level = rand.IntN(100)
+	me.Email = qualityWord + "@" + strings.ToLower(animalName) + ".com"
+	me.CreatedAt = time.Now()
+	me.Level = rand.IntN(100)
 }
 
 func generateRandomUsers(count int) []*User {

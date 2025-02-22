@@ -7,21 +7,26 @@ import (
 	"time"
 )
 
-func testSqlite(users []*User) {
-	const DB_FILE_PATH = "./test-sqlite.db"
+const DB_FILE_PATH = "./test-sqlite.db"
+
+func testSqlite(users []*User, threadCount int) {
 	if checkFileExists(DB_FILE_PATH) {
 		assertError(os.Remove(DB_FILE_PATH))
 	}
 	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
 	var setupText = readStringFromFile(executablePath + "/setup.sql")
 	assertResultError(db.Exec(setupText))
+	db.Close()
 
 	var beginning = time.Now()
-	for _, user := range users {
-		assertResultError(db.Exec("INSERT INTO users (name, passwordHash, email, createdAt, level) VALUES (?, ?, ?, ?, ?)",
-			user.Name, user.PasswordHash, user.Email, user.CreatedAt, user.Level))
+	var usersChannel = make(chan *User)
+	for i := 0; i < threadCount; i++ {
+		go writeSqlite(usersChannel)
 	}
-	db.Close()
+	for _, user := range users {
+		usersChannel <- user
+	}
+	close(usersChannel)
 	var elapsed = time.Since(beginning)
 
 	db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))

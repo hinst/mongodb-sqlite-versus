@@ -10,13 +10,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const MONGO_DB_URL = "mongodb://localhost:27017"
+
 func testMongo(users []*User, threadCount int) {
 	var beginning = time.Now()
 	var usersChannel = make(chan *User)
 	for i := 0; i < threadCount; i++ {
-		go func() {
-			writeUsers(usersChannel)
-		}()
+		go writeUsers(usersChannel)
 	}
 	for _, user := range users {
 		usersChannel <- user
@@ -24,7 +24,7 @@ func testMongo(users []*User, threadCount int) {
 	close(usersChannel)
 	var elapsed = time.Since(beginning)
 
-	var clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
+	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
 	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
 	defer func() {
 		assertError(client.Disconnect(context.Background()))

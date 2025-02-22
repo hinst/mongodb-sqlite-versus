@@ -36,3 +36,15 @@ Intermediate conclusion:
 	* Seems like repeating field names (such as "passwordHash") in every of the one million documents is no big deal
 * MongoDB CPU usage is 60% higher than SQLite
 	* However, if we count only server CPU usage of MongoDB, then SQLite and MongoDB have equal CPU usage
+
+Time for multi-threaded test with 4 threads
+* SQLite
+	* Time: 38 seconds
+	* CPU usage: 6%
+* MongoDB
+	* Time: 35 seconds
+	* CPU usage:
+		* Client: 11%
+		* Server: 20%
+
+SQLite gained nothing from multi-threaded writing. MongoDB is now as fast as SQLite, but uses 5x more CPU.
