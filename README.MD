@@ -43,7 +43,7 @@ Time for multi-threaded test with 4 threads
 	* CPU usage: 6%
 * MongoDB
 	* Time: 35 seconds
-	* CPU usage:
+	* CPU usage: 31%
 		* Client: 11%
 		* Server: 20%
 
