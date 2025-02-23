@@ -29,13 +29,20 @@ func (me *SqliteTest) prepare() {
 		assertError(os.Remove(DB_FILE_PATH + "-wal"))
 	}
 	var db = me.open()
+	defer me.close(db)
 	var setupText = readStringFromFile(executablePath + "/setup.sql")
 	assertResultError(db.Exec(setupText))
-	assertError(db.Close())
 }
 
 func (me *SqliteTest) open() *sql.DB {
 	return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+"?_journal_mode=WAL"))
+}
+
+func (me *SqliteTest) close(db *sql.DB) *sql.DB {
+	if db != nil {
+		assertError(db.Close())
+	}
+	return nil
 }
 
 func (me *SqliteTest) run() {
@@ -102,6 +109,7 @@ func (me *SqliteTest) runQueries() time.Duration {
 
 func (me *SqliteTest) readUsers(users chan *User) {
 	var db *sql.DB
+	defer me.close(db)
 	var counter = 0
 	for user := range users {
 		if nil == db {
@@ -117,17 +125,14 @@ func (me *SqliteTest) readUsers(users chan *User) {
 		assertCondition(*user == userB, "Users must be equal")
 		counter += 1
 		if (counter%me.batchSize) == 0 && db != nil {
-			assertError(db.Close())
-			db = nil
+			db = me.close(db)
 		}
-	}
-	if db != nil {
-		assertError(db.Close())
 	}
 }
 
 func (me *SqliteTest) writeUsers(users chan *User) {
 	var db *sql.DB
+	defer me.close(db)
 	var counter = 0
 	for user := range users {
 		if nil == db {
@@ -138,22 +143,18 @@ func (me *SqliteTest) writeUsers(users chan *User) {
 		assertError(row.Scan(&user.SqliteId))
 		counter += 1
 		if (counter%me.batchSize) == 0 && db != nil {
-			assertError(db.Close())
-			db = nil
+			db = me.close(db)
 		}
-	}
-	if db != nil {
-		assertError(db.Close())
 	}
 }
 
 func (me *SqliteTest) compress() (int64, int64) {
 	var db = me.open()
+	defer me.close(db)
 	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
 	assertResultError(db.Exec("VACUUM;"))
 	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
-	assertError(db.Close())
 
 	var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	return sizeBeforeVacuum, sizeAfterVacuum
