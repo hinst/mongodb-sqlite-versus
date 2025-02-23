@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 const DB_FILE_PATH = "./test-sqlite.db"
@@ -38,8 +40,10 @@ func (me *SqliteTest) run() {
 	var sizeBeforeVacuum, sizeAfterVacuum = me.compress()
 	fmt.Printf("SQLite file size: %v -> %v\n",
 		formatFileSize(sizeBeforeVacuum), formatFileSize(sizeAfterVacuum))
-	fmt.Printf(TAB+"insertion duration: %v, rows per second: %.0f\n", insertDuration, insertionsPerSecond)
-	fmt.Printf(TAB+"reading duration: %v, rows per second: %.0f\n", readDuration, readsPerSecond)
+	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
+		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
+	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
+		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
 }
 
 func (me *SqliteTest) testInsertion() time.Duration {

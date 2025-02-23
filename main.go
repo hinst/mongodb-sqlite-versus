@@ -13,7 +13,8 @@ func main() {
 	const threadCount = 4
 	const waitInterval = 100 * time.Millisecond
 	var users = generateRandomUsers(rowCount)
-	fmt.Printf("Testing rows[%v] threads[%v]\n", len(users), threadCount)
+	fmt.Printf("Testing rows[%v] batchSize[%v] threads[%v]\n",
+		len(users), batchSize, threadCount)
 
 	time.Sleep(waitInterval)
 	testJson(users)

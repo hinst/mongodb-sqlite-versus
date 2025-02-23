@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,9 +31,11 @@ func (me *MongoTest) run() {
 	var insertionsDuration = me.runInsertions()
 	var insertionsPerSecond = float64(len(me.users)) / insertionsDuration.Seconds()
 
+	time.Sleep(10 * time.Second)
 	var sizeBefore, sizeAfter = me.compress()
 	fmt.Printf("MongoDB file size: %v -> %v\n", formatFileSize(sizeBefore), formatFileSize(sizeAfter))
-	fmt.Printf(TAB+"insertion duration: %v, rows per second: %.0f\n", insertionsDuration, insertionsPerSecond)
+	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
+		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 }
 
 func (me *MongoTest) runInsertions() time.Duration {

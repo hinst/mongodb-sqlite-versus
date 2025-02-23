@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"math/big"
 	"os"
 	"path/filepath"
 
@@ -71,5 +70,5 @@ func writeJsonToFile(path string, indent bool, obj any) {
 }
 
 func formatFileSize(size int64) string {
-	return humanize.BigIBytes(big.NewInt(size))
+	return humanize.IBytes(uint64(size))
 }

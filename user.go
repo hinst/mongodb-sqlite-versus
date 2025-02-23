@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	SqliteId     int       `json:"-"`
+	SqliteId     int       `json:"-" bson:"-"`
 	Name         string    `json:"name"`
 	PasswordHash string    `json:"passwordHash"`
 	AccessToken  string    `json:"accessToken"`
