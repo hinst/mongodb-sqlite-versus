@@ -5,8 +5,9 @@ type User struct {
 	name         string
 	passwordHash string
 	email        string
-	createdAt    time.Time
+	createdAt    dateTime
 	level        int
+	accessToken  string
 }
 
 For SQLite I set PRAGMA journal_mode = WAL; because this mode is supposed to offer a nice balance between performance and reliability.
@@ -19,7 +20,10 @@ I am going to generate one million rows and commit them one by one in a simple l
 	* Time: 33 seconds
 	* CPU usage: 5%
 * MongoDB
-	* Storage space: 112 MB
+	* Storage space
+		* Compressed, default: 112 MB
+		* Compressed, zstd: 75 MB
+		* Compressed, zlib: 75 MB
 		* Uncompressed: 195 MB
 	* Time: 2 minutes 14 seconds
 	* CPU usage: 8%
@@ -34,12 +38,14 @@ Intermediate conclusion:
 	* As expected, because it has no overhead from client-server communication
 * Thanks to compression, MongoDB uses less storage space than SQLite
 	* Seems like repeating field names (such as "passwordHash") in every of the one million documents is no big deal
+	* zlib compression seems to be especially good: using about 2x less storage space than SQLite
+	* Enabling zstd compression seems to have negligible CPU usage, so it is basically free storage saving
 * MongoDB CPU usage is 60% higher than SQLite
 	* However, if we count only server CPU usage of MongoDB, then SQLite and MongoDB have equal CPU usage
 
 Time for multi-threaded test with 4 threads
 * SQLite
-	* Time: 38 seconds
+	* Time: 37 seconds
 	* CPU usage: 6%
 * MongoDB
 	* Time: 35 seconds

@@ -10,6 +10,7 @@ import (
 type User struct {
 	Name         string    `json:"name"`         // bson:"n"
 	PasswordHash string    `json:"passwordHash"` // bson:"ph"
+	AccessToken  string    `json:"accessToken"`  // bson:"at"
 	Email        string    `json:"email"`        //bson:"e"
 	CreatedAt    time.Time `json:"createdAt"`    // bson:"ca"
 	Level        int       `json:"level"`        // bson:"l"
@@ -21,8 +22,11 @@ func (me *User) randomize() {
 	var index = rand.IntN(1000)
 	me.Name = qualityWord + " " + animalName + " " + strconv.Itoa(index)
 	me.PasswordHash = ""
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 2; i++ {
 		me.PasswordHash += strconv.Itoa(rand.Int())
+	}
+	for i := 0; i < 4; i++ {
+		me.AccessToken += strconv.Itoa(rand.Int())
 	}
 	me.Email = qualityWord + "@" + strings.ToLower(animalName) + ".com"
 	me.CreatedAt = time.Now()

@@ -12,7 +12,7 @@ func writeSqlite(users chan *User) {
 		if !ok {
 			break
 		}
-		assertResultError(db.Exec("INSERT INTO users (name, passwordHash, email, createdAt, level) VALUES (?, ?, ?, ?, ?)",
-			user.Name, user.PasswordHash, user.Email, user.CreatedAt, user.Level))
+		assertResultError(db.Exec("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?)",
+			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt, user.Level))
 	}
 }
