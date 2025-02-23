@@ -31,10 +31,10 @@ func (me *SqliteTest) prepare() {
 func (me *SqliteTest) run() {
 	me.prepare()
 
-	var insertDuration = me.testInsertion()
+	var insertDuration = me.runInserts()
 	var insertionsPerSecond = float64(len(me.users)) / insertDuration.Seconds()
 
-	var readDuration = me.testReading()
+	var readDuration = me.runQueries()
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
 
 	var beginning = time.Now()
@@ -49,16 +49,16 @@ func (me *SqliteTest) run() {
 		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
 }
 
-func (me *SqliteTest) testInsertion() time.Duration {
+func (me *SqliteTest) runInserts() time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for i := 0; i < me.threadCount; i++ {
+	for range me.threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			writeSqlite(usersChannel, me.batchSize)
+			me.writeUsers(usersChannel)
 		}()
 	}
 	for _, user := range me.users {
@@ -67,10 +67,11 @@ func (me *SqliteTest) testInsertion() time.Duration {
 	close(usersChannel)
 	waitGroup.Wait()
 	var elapsed = time.Since(beginning)
+
 	return elapsed
 }
 
-func (me *SqliteTest) testReading() time.Duration {
+func (me *SqliteTest) runQueries() time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
@@ -79,7 +80,7 @@ func (me *SqliteTest) testReading() time.Duration {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			readSqlite(usersChannel, me.batchSize)
+			me.readUsers(usersChannel)
 		}()
 	}
 	for _, user := range me.users {
@@ -87,6 +88,55 @@ func (me *SqliteTest) testReading() time.Duration {
 	}
 	var elapsed = time.Since(beginning)
 	return elapsed
+}
+
+func (me *SqliteTest) readUsers(users chan *User) {
+	var db *sql.DB
+	var counter = 0
+	for user := range users {
+		if nil == db {
+			db = assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+"?mode=ro"))
+		}
+		var row = db.QueryRow("SELECT name, passwordHash, accessToken, email, createdAt, level FROM users WHERE id=?", user.SqliteId)
+		assertError(row.Err())
+		var userB User = User{SqliteId: user.SqliteId}
+		var createdAt int64
+		row.Scan(&userB.Name, &userB.PasswordHash, &userB.AccessToken, &userB.Email, &createdAt, &userB.Level)
+		userB.CreatedAt = time.Unix(createdAt, 0)
+		// if *user != userB {
+		// 	fmt.Printf("Expected [%v] but got [%v]\n", *user, userB)
+		// }
+		assertCondition(*user == userB, "Users must be equal")
+		counter += 1
+		if (counter%me.batchSize) == 0 && db != nil {
+			assertError(db.Close())
+			db = nil
+		}
+	}
+	if db != nil {
+		assertError(db.Close())
+	}
+}
+
+func (me *SqliteTest) writeUsers(users chan *User) {
+	var db *sql.DB
+	var counter = 0
+	for user := range users {
+		if nil == db {
+			db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
+		}
+		var row = db.QueryRow("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt.Unix(), user.Level)
+		assertError(row.Scan(&user.SqliteId))
+		counter += 1
+		if (counter%me.batchSize) == 0 && db != nil {
+			assertError(db.Close())
+			db = nil
+		}
+	}
+	if db != nil {
+		assertError(db.Close())
+	}
 }
 
 func (me *SqliteTest) compress() (int64, int64) {
