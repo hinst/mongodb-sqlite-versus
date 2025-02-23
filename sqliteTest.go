@@ -25,7 +25,7 @@ func (me *SqliteTest) prepare() {
 	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
 	var setupText = readStringFromFile(executablePath + "/setup.sql")
 	assertResultError(db.Exec(setupText))
-	db.Close()
+	assertError(db.Close())
 }
 
 func (me *SqliteTest) run() {
@@ -92,8 +92,8 @@ func (me *SqliteTest) testReading() time.Duration {
 func (me *SqliteTest) compress() (int64, int64) {
 	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
 	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
-	db.Exec("VACUUM;")
-	db.Close()
+	assertResultError(db.Exec("VACUUM;"))
+	assertError(db.Close())
 
 	var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	return sizeBeforeVacuum, sizeAfterVacuum

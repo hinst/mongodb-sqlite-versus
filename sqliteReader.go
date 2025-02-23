@@ -9,18 +9,14 @@ func readSqlite(users chan *User, batchSize int) {
 	var db *sql.DB
 	defer func() {
 		if db != nil {
-			db.Close()
+			assertError(db.Close())
 			db = nil
 		}
 	}()
 	var counter = 0
-	for {
+	for user := range users {
 		if nil == db {
 			db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
-		}
-		var user, ok = <-users
-		if !ok {
-			break
 		}
 		var row = db.QueryRow("SELECT name, passwordHash, accessToken, email, createdAt, level FROM users WHERE id=?", user.SqliteId)
 		assertError(row.Err())
@@ -34,7 +30,7 @@ func readSqlite(users chan *User, batchSize int) {
 		assertCondition(*user == userB, "Users must be equal")
 		counter += 1
 		if (counter%batchSize) == 0 && db != nil {
-			db.Close()
+			assertError(db.Close())
 			db = nil
 		}
 	}
