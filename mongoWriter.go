@@ -7,19 +7,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func writeUsers(users chan *User) {
+func writeUsers(users chan *User, batchSize int) {
 	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
-	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
+	var client *mongo.Client = assertResultError(mongo.Connect(context.Background(), clientOptions))
 	defer func() {
-		assertError(client.Disconnect(context.Background()))
+		if client != nil {
+			assertError(client.Disconnect(context.Background()))
+			client = nil
+		}
 	}()
-	client.Database("test").Drop(context.Background())
-	var db = client.Database("test")
 	for {
 		var user, ok = <-users
 		if !ok {
 			break
 		}
+		var db = client.Database("test")
 		assertResultError(db.Collection("users").InsertOne(context.Background(), user))
 	}
 }

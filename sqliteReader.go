@@ -2,14 +2,22 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
-func readSqlite(users chan *User) {
-	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
-	defer db.Close()
+func readSqlite(users chan *User, batchSize int) {
+	var db *sql.DB
+	defer func() {
+		if db != nil {
+			db.Close()
+			db = nil
+		}
+	}()
+	var counter = 0
 	for {
+		if nil == db {
+			db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
+		}
 		var user, ok = <-users
 		if !ok {
 			break
@@ -20,11 +28,14 @@ func readSqlite(users chan *User) {
 		var createdAt int64
 		row.Scan(&userB.Name, &userB.PasswordHash, &userB.AccessToken, &userB.Email, &createdAt, &userB.Level)
 		userB.CreatedAt = time.Unix(createdAt, 0)
-		if *user != userB {
-			fmt.Printf("Expected [%v] but got [%v]\n", *user, userB)
-		} else {
-			println("ok")
-		}
+		// if *user != userB {
+		// 	fmt.Printf("Expected [%v] but got [%v]\n", *user, userB)
+		// }
 		assertCondition(*user == userB, "Users must be equal")
+		counter += 1
+		if (counter%batchSize) == 0 && db != nil {
+			db.Close()
+			db = nil
+		}
 	}
 }

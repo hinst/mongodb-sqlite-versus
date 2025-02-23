@@ -11,9 +11,12 @@ import (
 const DB_FILE_PATH = "./test-sqlite.db"
 
 type SqliteTest struct {
+	users       []*User
+	batchSize   int
+	threadCount int
 }
 
-func (me *SqliteTest) initialize() {
+func (me *SqliteTest) prepare() {
 	if checkFileExists(DB_FILE_PATH) {
 		assertError(os.Remove(DB_FILE_PATH))
 	}
@@ -23,19 +26,35 @@ func (me *SqliteTest) initialize() {
 	db.Close()
 }
 
-func (me *SqliteTest) testInsertion(users []*User, threadCount int) time.Duration {
+func (me *SqliteTest) run() {
+	me.prepare()
+
+	var insertDuration = me.testInsertion()
+	var insertionsPerSecond = float64(len(me.users)) / insertDuration.Seconds()
+
+	var readDuration = me.testReading()
+	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
+
+	var sizeBeforeVacuum, sizeAfterVacuum = me.compress()
+	fmt.Printf("SQLite file size: %v -> %v\n",
+		formatFileSize(sizeBeforeVacuum), formatFileSize(sizeAfterVacuum))
+	fmt.Printf(TAB+"insertion duration: %v, rows per second: %.0f\n", insertDuration, insertionsPerSecond)
+	fmt.Printf(TAB+"reading duration: %v, rows per second: %.0f\n", readDuration, readsPerSecond)
+}
+
+func (me *SqliteTest) testInsertion() time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for i := 0; i < threadCount; i++ {
+	for i := 0; i < me.threadCount; i++ {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			writeSqlite(usersChannel)
+			writeSqlite(usersChannel, me.batchSize)
 		}()
 	}
-	for _, user := range users {
+	for _, user := range me.users {
 		usersChannel <- user
 	}
 	close(usersChannel)
@@ -44,19 +63,19 @@ func (me *SqliteTest) testInsertion(users []*User, threadCount int) time.Duratio
 	return elapsed
 }
 
-func (me *SqliteTest) testReading(users []*User, threadCount int) time.Duration {
+func (me *SqliteTest) testReading() time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for i := 0; i < threadCount; i++ {
+	for i := 0; i < me.threadCount; i++ {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			readSqlite(usersChannel)
+			readSqlite(usersChannel, me.batchSize)
 		}()
 	}
-	for _, user := range users {
+	for _, user := range me.users {
 		usersChannel <- user
 	}
 	var elapsed = time.Since(beginning)
@@ -71,20 +90,4 @@ func (me *SqliteTest) compress() (int64, int64) {
 
 	var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	return sizeBeforeVacuum, sizeAfterVacuum
-}
-
-func (me *SqliteTest) run(users []*User, threadCount int) {
-	me.initialize()
-
-	var insertDuration = me.testInsertion(users, threadCount)
-	var insertionsPerSecond = float64(len(users)) / insertDuration.Seconds()
-
-	var readDuration = me.testReading(users, threadCount)
-	var readsPerSecond = float64(len(users)) / readDuration.Seconds()
-
-	var sizeBeforeVacuum, sizeAfterVacuum = me.compress()
-	fmt.Printf("SQLite file size: %v -> %v\n",
-		formatFileSize(sizeBeforeVacuum), formatFileSize(sizeAfterVacuum))
-	fmt.Printf(TAB+"insertion duration: %v, rows per second: %.1f\n", insertDuration, insertionsPerSecond)
-	fmt.Printf(TAB+"reading duration: %v, rows per second: %.1f\n", readDuration, readsPerSecond)
 }

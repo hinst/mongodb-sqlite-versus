@@ -8,17 +8,19 @@ import (
 )
 
 func main() {
-	const rowCount = 1
+	const rowCount = 100_000
+	const batchSize = 10
 	const threadCount = 4
+	const waitInterval = 100 * time.Millisecond
 	var users = generateRandomUsers(rowCount)
-	fmt.Printf("Testing rows [%v]\n", len(users))
+	fmt.Printf("Testing rows[%v] threads[%v]\n", len(users), threadCount)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(waitInterval)
 	testJson(users)
 
-	time.Sleep(100 * time.Millisecond)
-	new(SqliteTest).run(users, threadCount)
+	time.Sleep(waitInterval)
+	(&SqliteTest{users, batchSize, threadCount}).run()
 
-	time.Sleep(100 * time.Millisecond)
-	testMongo(users, threadCount)
+	time.Sleep(waitInterval)
+	(&MongoTest{users, batchSize, threadCount}).run()
 }
