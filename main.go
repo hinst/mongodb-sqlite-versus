@@ -17,7 +17,7 @@ func main() {
 	testJson(users)
 
 	time.Sleep(100 * time.Millisecond)
-	testSqlite(users, threadCount)
+	new(SqliteTest).run(users, threadCount)
 
 	time.Sleep(100 * time.Millisecond)
 	testMongo(users, threadCount)

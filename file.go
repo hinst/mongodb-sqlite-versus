@@ -44,6 +44,8 @@ const (
 	OS_ALL_RWX = OS_ALL_RW | OS_GROUP_X
 )
 
+const TAB = "\t"
+
 func readStringFromFile(path string) string {
 	return string(assertResultError(os.ReadFile(path)))
 }

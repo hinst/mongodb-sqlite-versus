@@ -8,12 +8,13 @@ import (
 )
 
 type User struct {
-	Name         string    `json:"name"`         // bson:"n"
-	PasswordHash string    `json:"passwordHash"` // bson:"ph"
-	AccessToken  string    `json:"accessToken"`  // bson:"at"
-	Email        string    `json:"email"`        //bson:"e"
-	CreatedAt    time.Time `json:"createdAt"`    // bson:"ca"
-	Level        int       `json:"level"`        // bson:"l"
+	SqliteId     int       `json:"-"`
+	Name         string    `json:"name"`
+	PasswordHash string    `json:"passwordHash"`
+	AccessToken  string    `json:"accessToken"`
+	Email        string    `json:"email"`
+	CreatedAt    time.Time `json:"createdAt"`
+	Level        int       `json:"level"`
 }
 
 func (me *User) randomize() {

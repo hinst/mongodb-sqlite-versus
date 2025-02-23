@@ -12,7 +12,8 @@ func writeSqlite(users chan *User) {
 		if !ok {
 			break
 		}
-		assertResultError(db.Exec("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?)",
-			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt, user.Level))
+		var row = db.QueryRow("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt, user.Level)
+		assertError(row.Scan(&user.SqliteId))
 	}
 }
