@@ -5,16 +5,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
-	SqliteId     int       `json:"-" bson:"-"`
-	Name         string    `json:"name"`
-	PasswordHash string    `json:"passwordHash"`
-	AccessToken  string    `json:"accessToken"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"createdAt"`
-	Level        int       `json:"level"`
+	_id          primitive.ObjectID `json:"-" bson:"_id"`
+	SqliteId     int                `json:"-" bson:"-"`
+	Name         string             `json:"name"`
+	PasswordHash string             `json:"passwordHash"`
+	AccessToken  string             `json:"accessToken"`
+	Email        string             `json:"email"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	Level        int                `json:"level"`
 }
 
 func (me *User) randomize() {
