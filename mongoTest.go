@@ -84,7 +84,7 @@ func (me *MongoTest) writeUsers(users chan *User) {
 		}
 		var db = client.Database("test")
 		var result = assertResultError(db.Collection("users").InsertOne(context.Background(), user))
-		user._id = result.InsertedID.(primitive.ObjectID)
+		user.MongoId = result.InsertedID.(primitive.ObjectID)
 		counter += 1
 		if (counter%me.batchSize) == 0 && client != nil {
 			assertError(client.Disconnect(context.Background()))
@@ -128,8 +128,14 @@ func (me *MongoTest) readUsers(usersChannel chan *User, batchSize int) {
 			client = assertResultError(mongo.Connect(context.Background(), clientOptions))
 		}
 		var collection = client.Database("test").Collection("users")
-		var result = collection.FindOne(context.Background(), bson.M{"_id": user._id})
+		var result = collection.FindOne(context.Background(), bson.M{"_id": user.MongoId})
 		assertError(result.Err())
+		var userA = *user
+		userA.SqliteId = 0
+		userA.CreatedAt = userA.CreatedAt.UTC()
+		var userB User
+		result.Decode(&userB)
+		assertCondition(userA == userB, "Users must be equal")
 		counter += 1
 		if (counter%batchSize) == 0 && client != nil {
 			assertError(client.Disconnect(context.Background()))

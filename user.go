@@ -10,7 +10,7 @@ import (
 )
 
 type User struct {
-	_id          primitive.ObjectID `json:"-" bson:"_id"`
+	MongoId      primitive.ObjectID `json:"-" bson:"_id,omitempty"`
 	SqliteId     int                `json:"-" bson:"-"`
 	Name         string             `json:"name"`
 	PasswordHash string             `json:"passwordHash"`
