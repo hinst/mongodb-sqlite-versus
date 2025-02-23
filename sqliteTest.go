@@ -22,10 +22,20 @@ func (me *SqliteTest) prepare() {
 	if checkFileExists(DB_FILE_PATH) {
 		assertError(os.Remove(DB_FILE_PATH))
 	}
-	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
+	if checkFileExists(DB_FILE_PATH + "-shm") {
+		assertError(os.Remove(DB_FILE_PATH + "-shm"))
+	}
+	if checkFileExists(DB_FILE_PATH + "-wal") {
+		assertError(os.Remove(DB_FILE_PATH + "-wal"))
+	}
+	var db = me.open()
 	var setupText = readStringFromFile(executablePath + "/setup.sql")
 	assertResultError(db.Exec(setupText))
 	assertError(db.Close())
+}
+
+func (me *SqliteTest) open() *sql.DB {
+	return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+"?_journal_mode=WAL"))
 }
 
 func (me *SqliteTest) run() {
@@ -76,7 +86,7 @@ func (me *SqliteTest) runQueries() time.Duration {
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for i := 0; i < me.threadCount; i++ {
+	for range me.threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
@@ -95,17 +105,15 @@ func (me *SqliteTest) readUsers(users chan *User) {
 	var counter = 0
 	for user := range users {
 		if nil == db {
-			db = assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+"?mode=ro"))
+			db = me.open()
 		}
 		var row = db.QueryRow("SELECT name, passwordHash, accessToken, email, createdAt, level FROM users WHERE id=?", user.SqliteId)
-		assertError(row.Err())
 		var userB User = User{SqliteId: user.SqliteId}
 		var createdAt int64
-		row.Scan(&userB.Name, &userB.PasswordHash, &userB.AccessToken, &userB.Email, &createdAt, &userB.Level)
+		assertError(row.Scan(
+			&userB.Name, &userB.PasswordHash, &userB.AccessToken, &userB.Email, &createdAt, &userB.Level))
+		assertError(row.Err())
 		userB.CreatedAt = time.Unix(createdAt, 0)
-		// if *user != userB {
-		// 	fmt.Printf("Expected [%v] but got [%v]\n", *user, userB)
-		// }
 		assertCondition(*user == userB, "Users must be equal")
 		counter += 1
 		if (counter%me.batchSize) == 0 && db != nil {
@@ -123,7 +131,7 @@ func (me *SqliteTest) writeUsers(users chan *User) {
 	var counter = 0
 	for user := range users {
 		if nil == db {
-			db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
+			db = me.open()
 		}
 		var row = db.QueryRow("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
 			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt.Unix(), user.Level)
@@ -140,9 +148,11 @@ func (me *SqliteTest) writeUsers(users chan *User) {
 }
 
 func (me *SqliteTest) compress() (int64, int64) {
-	var db = assertResultError(sql.Open("sqlite3", DB_FILE_PATH))
+	var db = me.open()
 	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
+	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
 	assertResultError(db.Exec("VACUUM;"))
+	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
 	assertError(db.Close())
 
 	var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
