@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -31,9 +32,12 @@ func (me *MongoTest) run() {
 	var insertionsDuration = me.runInsertions()
 	var insertionsPerSecond = float64(len(me.users)) / insertionsDuration.Seconds()
 
-	time.Sleep(10 * time.Second)
+	var beginning = time.Now()
 	var sizeBefore, sizeAfter = me.compress()
-	fmt.Printf("MongoDB file size: %v -> %v\n", formatFileSize(sizeBefore), formatFileSize(sizeAfter))
+	var compressionDuration = time.Since(beginning)
+
+	fmt.Printf("MongoDB file size: %v -> %v, compression duration %v\n",
+		formatFileSize(sizeBefore), formatFileSize(sizeAfter), compressionDuration)
 	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
 		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 }
@@ -41,13 +45,19 @@ func (me *MongoTest) run() {
 func (me *MongoTest) runInsertions() time.Duration {
 	var beginning = time.Now()
 	var usersChannel = make(chan *User)
+	var waitGroup sync.WaitGroup
 	for i := 0; i < me.threadCount; i++ {
-		go writeUsers(usersChannel, me.batchSize)
+		waitGroup.Add(1)
+		go func() {
+			writeUsers(usersChannel, me.batchSize)
+			waitGroup.Done()
+		}()
 	}
 	for _, user := range me.users {
 		usersChannel <- user
 	}
 	close(usersChannel)
+	waitGroup.Wait()
 	var elapsed = time.Since(beginning)
 	return elapsed
 }
@@ -58,7 +68,6 @@ func (me *MongoTest) compress() (sizeBefore int64, sizeAfter int64) {
 	defer func() { assertError(client.Disconnect(context.Background())) }()
 	var db = client.Database("test")
 	db.RunCommand(context.Background(), bson.M{"compact": "users"})
-	time.Sleep(10 * time.Second)
 	var stats = getMongoDbStats(db)
-	return int64(stats.dataSize), int64(stats.dataSize)
+	return int64(stats.dataSize), int64(stats.storageSize)
 }

@@ -37,9 +37,12 @@ func (me *SqliteTest) run() {
 	var readDuration = me.testReading()
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
 
-	var sizeBeforeVacuum, sizeAfterVacuum = me.compress()
-	fmt.Printf("SQLite file size: %v -> %v\n",
-		formatFileSize(sizeBeforeVacuum), formatFileSize(sizeAfterVacuum))
+	var beginning = time.Now()
+	var sizeBefore, sizeAfter = me.compress()
+	var compressionDuration = time.Since(beginning)
+
+	fmt.Printf("SQLite file size: %v -> %v, compression duration: %v\n",
+		formatFileSize(sizeBefore), formatFileSize(sizeAfter), compressionDuration)
 	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
 		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
