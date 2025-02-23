@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	const rowCount = 1_000_000
+	const rowCount = 1
 	const threadCount = 4
 	var users = generateRandomUsers(rowCount)
 	fmt.Printf("Testing rows [%v]\n", len(users))

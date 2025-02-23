@@ -13,7 +13,7 @@ func writeSqlite(users chan *User) {
 			break
 		}
 		var row = db.QueryRow("INSERT INTO users (name, passwordHash, accessToken, email, createdAt, level) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
-			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt, user.Level)
+			user.Name, user.PasswordHash, user.AccessToken, user.Email, user.CreatedAt.Unix(), user.Level)
 		assertError(row.Scan(&user.SqliteId))
 	}
 }

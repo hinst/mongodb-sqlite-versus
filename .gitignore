@@ -1,3 +1,5 @@
 /mongodb-sqlite-versus.exe
 /test-sqlite.db
 /jsonFile.json
+/test-sqlite.db-shm
+/test-sqlite.db-wal

@@ -30,7 +30,8 @@ func (me *User) randomize() {
 		me.AccessToken += strconv.Itoa(rand.Int())
 	}
 	me.Email = qualityWord + "@" + strings.ToLower(animalName) + ".com"
-	me.CreatedAt = time.Now()
+	var createdAgo = time.Duration(rand.IntN(1000)) * time.Minute
+	me.CreatedAt = time.Now().Add(-createdAgo).Truncate(time.Second)
 	me.Level = rand.IntN(100)
 }
 
