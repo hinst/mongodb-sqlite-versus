@@ -38,6 +38,14 @@ func (me *User) randomize() {
 	me.Level = rand.IntN(100)
 }
 
+func (me *User) compare(other *User) bool {
+	return me.Name == other.Name &&
+		me.PasswordHash == other.PasswordHash &&
+		me.AccessToken == other.AccessToken &&
+		me.Email == other.Email &&
+		me.CreatedAt.UTC().Equal(other.CreatedAt.UTC())
+}
+
 func generateRandomUsers(count int) []*User {
 	var users = make([]*User, count)
 	for i := 0; i < count; i++ {
