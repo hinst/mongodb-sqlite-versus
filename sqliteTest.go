@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"math/rand/v2"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 )
 
 const DB_FILE_PATH = "./test-sqlite.db"
+const DB_TIMEOUT = 60 * 60 * 1000
 
 type SqliteTest struct {
 	users       []*User
@@ -35,7 +38,8 @@ func (me *SqliteTest) prepare() {
 }
 
 func (me *SqliteTest) open() *sql.DB {
-	return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+"?_journal_mode=WAL"))
+	return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+
+		"?_journal_mode=WAL&_busy_timeout="+strconv.Itoa(DB_TIMEOUT)))
 }
 
 func (me *SqliteTest) close(db *sql.DB) *sql.DB {
@@ -54,6 +58,10 @@ func (me *SqliteTest) run() {
 	var readDuration = me.runQueries()
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
 
+	var combinedReadDuration, combinedUpdateDuration = me.runCombined()
+	var combinedReadsPerSecond = float64(len(me.users)) / combinedReadDuration.Seconds()
+	var combinedUpdatesPerSecond = float64(len(me.users)) / combinedUpdateDuration.Seconds()
+
 	var beginning = time.Now()
 	var sizeBefore, sizeAfter = me.compress()
 	var compressionDuration = time.Since(beginning)
@@ -64,6 +72,11 @@ func (me *SqliteTest) run() {
 		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
 		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
+	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
+		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
+		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
+	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
+		combinedReadDuration, combinedUpdateDuration)
 }
 
 func (me *SqliteTest) runInserts() time.Duration {
@@ -103,8 +116,49 @@ func (me *SqliteTest) runQueries() time.Duration {
 	for _, user := range me.users {
 		usersChannel <- user
 	}
+	close(usersChannel)
+	waitGroup.Wait()
 	var elapsed = time.Since(beginning)
+
 	return elapsed
+}
+
+func (me *SqliteTest) runUpdates() time.Duration {
+	var usersChannel = make(chan *User)
+	var waitGroup sync.WaitGroup
+
+	var beginning = time.Now()
+	for range me.threadCount {
+		waitGroup.Add(1)
+		go func() {
+			defer waitGroup.Done()
+			me.updateUsers(usersChannel)
+		}()
+	}
+	for _, user := range me.users {
+		usersChannel <- user
+	}
+	close(usersChannel)
+	waitGroup.Wait()
+	var elapsed = time.Since(beginning)
+
+	return elapsed
+}
+
+func (me *SqliteTest) runCombined() (readDuration time.Duration, updateDuration time.Duration) {
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		readDuration = me.runQueries()
+	}()
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		updateDuration = me.runUpdates()
+	}()
+	waitGroup.Wait()
+	return readDuration, updateDuration
 }
 
 func (me *SqliteTest) readUsers(users chan *User) {
@@ -122,7 +176,23 @@ func (me *SqliteTest) readUsers(users chan *User) {
 			&userB.Name, &userB.PasswordHash, &userB.AccessToken, &userB.Email, &createdAt, &userB.Level))
 		assertError(row.Err())
 		userB.CreatedAt = time.Unix(createdAt, 0)
-		assertCondition(*user == userB, "Users must be equal")
+		assertCondition(user.compare(&userB), "Users must be equal")
+		counter += 1
+		if (counter%me.batchSize) == 0 && db != nil {
+			db = me.close(db)
+		}
+	}
+}
+
+func (me *SqliteTest) updateUsers(users chan *User) {
+	var db *sql.DB
+	defer me.close(db)
+	var counter = 0
+	for user := range users {
+		if nil == db {
+			db = me.open()
+		}
+		assertResultError(db.Exec("UPDATE users SET level=? WHERE id=?", rand.IntN(100), user.SqliteId))
 		counter += 1
 		if (counter%me.batchSize) == 0 && db != nil {
 			db = me.close(db)
@@ -151,8 +221,8 @@ func (me *SqliteTest) writeUsers(users chan *User) {
 func (me *SqliteTest) compress() (int64, int64) {
 	var db = me.open()
 	defer me.close(db)
-	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
+	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
 	assertResultError(db.Exec("VACUUM;"))
 	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
 
