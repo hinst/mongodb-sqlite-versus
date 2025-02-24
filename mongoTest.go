@@ -22,10 +22,14 @@ type MongoTest struct {
 }
 
 func (me *MongoTest) prepare() {
-	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
-	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
-	defer func() { assertError(client.Disconnect(context.Background())) }()
+	var client = me.open()
+	defer me.close(client)
 	client.Database("test").Drop(context.Background())
+}
+
+func (me *MongoTest) open() *mongo.Client {
+	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
+	return assertResultError(mongo.Connect(context.Background(), clientOptions))
 }
 
 func (me *MongoTest) run() {
@@ -69,26 +73,19 @@ func (me *MongoTest) runInsertions() time.Duration {
 }
 
 func (me *MongoTest) writeUsers(users chan *User) {
-	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
 	var client *mongo.Client
 	var counter = 0
-	defer func() {
-		if client != nil {
-			assertError(client.Disconnect(context.Background()))
-			client = nil
-		}
-	}()
+	defer me.close(client)
 	for user := range users {
 		if nil == client {
-			client = assertResultError(mongo.Connect(context.Background(), clientOptions))
+			client = me.open()
 		}
 		var db = client.Database("test")
 		var result = assertResultError(db.Collection("users").InsertOne(context.Background(), user))
 		user.MongoId = result.InsertedID.(primitive.ObjectID)
 		counter += 1
 		if (counter%me.batchSize) == 0 && client != nil {
-			assertError(client.Disconnect(context.Background()))
-			client = nil
+			client = me.close(client)
 		}
 	}
 }
@@ -114,42 +111,42 @@ func (me *MongoTest) runQueries() time.Duration {
 }
 
 func (me *MongoTest) readUsers(usersChannel chan *User, batchSize int) {
-	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
 	var client *mongo.Client
-	defer func() {
-		if client != nil {
-			assertError(client.Disconnect(context.Background()))
-			client = nil
-		}
-	}()
+	defer me.close(client)
 	var counter = 0
 	for user := range usersChannel {
 		if nil == client {
-			client = assertResultError(mongo.Connect(context.Background(), clientOptions))
+			client = me.open()
 		}
 		var collection = client.Database("test").Collection("users")
 		var result = collection.FindOne(context.Background(), bson.M{"_id": user.MongoId})
 		assertError(result.Err())
-		var userA = *user
-		userA.SqliteId = 0
-		userA.CreatedAt = userA.CreatedAt.UTC()
 		var userB User
 		result.Decode(&userB)
-		assertCondition(userA == userB, "Users must be equal")
+		assertCondition(user.compare(&userB), "Users must be equal")
 		counter += 1
 		if (counter%batchSize) == 0 && client != nil {
-			assertError(client.Disconnect(context.Background()))
-			client = nil
+			client = me.close(client)
 		}
 	}
 }
 
+func (me *MongoTest) runCombined() {
+
+}
+
 func (me *MongoTest) compress() (sizeBefore int64, sizeAfter int64) {
-	var clientOptions = options.Client().ApplyURI(MONGO_DB_URL)
-	var client = assertResultError(mongo.Connect(context.Background(), clientOptions))
-	defer func() { assertError(client.Disconnect(context.Background())) }()
+	var client = me.open()
+	defer me.close(client)
 	var db = client.Database("test")
 	db.RunCommand(context.Background(), bson.M{"compact": "users"})
 	var stats = getMongoDbStats(db)
 	return int64(stats.dataSize), int64(stats.storageSize)
+}
+
+func (me *MongoTest) close(client *mongo.Client) *mongo.Client {
+	if client != nil {
+		assertError(client.Disconnect(context.Background()))
+	}
+	return nil
 }
