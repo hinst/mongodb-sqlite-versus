@@ -12,12 +12,12 @@ import (
 type User struct {
 	MongoId      primitive.ObjectID `json:"-" bson:"_id,omitempty"`
 	SqliteId     int                `json:"-" bson:"-"`
-	Name         string             `json:"name"`
-	PasswordHash string             `json:"passwordHash"`
-	AccessToken  string             `json:"accessToken"`
-	Email        string             `json:"email"`
-	CreatedAt    time.Time          `json:"createdAt"`
-	Level        int                `json:"level"`
+	Name         string             `json:"name" bson:"name"`
+	PasswordHash string             `json:"passwordHash" bson:"passwordHash"`
+	AccessToken  string             `json:"accessToken" bson:"accessToken"`
+	Email        string             `json:"email" bson:"email"`
+	CreatedAt    time.Time          `json:"createdAt" bson:"createdAt"`
+	Level        int                `json:"level" bson:"level"`
 }
 
 func (me *User) randomize() {

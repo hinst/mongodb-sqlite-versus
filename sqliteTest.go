@@ -147,18 +147,21 @@ func (me *SqliteTest) runUpdates() time.Duration {
 
 func (me *SqliteTest) runCombined() (readDuration time.Duration, updateDuration time.Duration) {
 	var waitGroup sync.WaitGroup
-	waitGroup.Add(1)
-	go func() {
-		defer waitGroup.Done()
-		readDuration = me.runQueries()
-	}()
+
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
 		updateDuration = me.runUpdates()
 	}()
+
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		readDuration = me.runQueries()
+	}()
+
 	waitGroup.Wait()
-	return readDuration, updateDuration
+	return
 }
 
 func (me *SqliteTest) readUsers(users chan *User) {

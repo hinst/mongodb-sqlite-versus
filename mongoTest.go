@@ -40,6 +40,10 @@ func (me *MongoTest) run() {
 	var queriesDuration = me.runQueries()
 	var queriesPerSecond = float64(len(me.users)) / queriesDuration.Seconds()
 
+	var combinedReadDuration, combinedUpdateDuration = me.runCombined()
+	var combinedReadsPerSecond = float64(len(me.users)) / combinedReadDuration.Seconds()
+	var combinedUpdatesPerSecond = float64(len(me.users)) / combinedUpdateDuration.Seconds()
+
 	var beginning = time.Now()
 	var sizeBefore, sizeAfter = me.compress()
 	var compressionDuration = time.Since(beginning)
@@ -50,6 +54,11 @@ func (me *MongoTest) run() {
 		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 	fmt.Printf(TAB+"queries duration: %v, rows per second: %v\n",
 		queriesDuration, humanize.CommafWithDigits(queriesPerSecond, 0))
+	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
+		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
+		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
+	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
+		combinedReadDuration, combinedUpdateDuration)
 }
 
 func (me *MongoTest) runInsertions() time.Duration {
@@ -131,8 +140,66 @@ func (me *MongoTest) readUsers(usersChannel chan *User, batchSize int) {
 	}
 }
 
-func (me *MongoTest) runCombined() {
+func (me *MongoTest) runCombined() (readDuration time.Duration, updateDuration time.Duration) {
+	var waitGroup sync.WaitGroup
 
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		updateDuration = me.runUpdates()
+	}()
+
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		readDuration = me.runQueries()
+	}()
+
+	waitGroup.Wait()
+	return readDuration, updateDuration
+}
+
+func (me *MongoTest) runUpdates() time.Duration {
+	var usersChannel = make(chan *User)
+	var waitGroup sync.WaitGroup
+
+	var beginning = time.Now()
+	for range me.threadCount {
+		waitGroup.Add(1)
+		go func() {
+			defer waitGroup.Done()
+			me.updateUsers(usersChannel)
+		}()
+	}
+	for _, user := range me.users {
+		usersChannel <- user
+	}
+	close(usersChannel)
+	waitGroup.Wait()
+	var elapsed = time.Since(beginning)
+
+	return elapsed
+}
+
+func (me *MongoTest) updateUsers(users chan *User) {
+	var client *mongo.Client
+	defer me.close(client)
+	var counter = 0
+	for user := range users {
+		if nil == client {
+			client = me.open()
+		}
+		var collection = client.Database("test").Collection("users")
+		assertResultError(collection.UpdateOne(
+			context.Background(),
+			bson.M{"_id": user.MongoId},
+			bson.M{"$set": user},
+		))
+		counter += 1
+		if (counter%me.batchSize) == 0 && client != nil {
+			client = me.close(client)
+		}
+	}
 }
 
 func (me *MongoTest) compress() (sizeBefore int64, sizeAfter int64) {
