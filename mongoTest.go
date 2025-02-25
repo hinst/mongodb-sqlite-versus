@@ -36,13 +36,23 @@ func (me *MongoTest) run() {
 	me.prepare()
 	var insertionsDuration = me.runInsertions()
 	var insertionsPerSecond = float64(len(me.users)) / insertionsDuration.Seconds()
+	fmt.Printf(TAB+"insertions duration: %v, rows per second: %v\n",
+		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 
 	var queriesDuration = me.runQueries()
 	var queriesPerSecond = float64(len(me.users)) / queriesDuration.Seconds()
+	fmt.Printf(TAB+"queries duration: %v, rows per second: %v\n",
+		queriesDuration, humanize.CommafWithDigits(queriesPerSecond, 0))
 
 	var combinedReadDuration, combinedUpdateDuration = me.runCombined()
 	var combinedReadsPerSecond = float64(len(me.users)) / combinedReadDuration.Seconds()
 	var combinedUpdatesPerSecond = float64(len(me.users)) / combinedUpdateDuration.Seconds()
+
+	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
+		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
+		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
+	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
+		combinedReadDuration, combinedUpdateDuration)
 
 	var beginning = time.Now()
 	var sizeBefore, sizeAfter = me.compress()
@@ -50,15 +60,6 @@ func (me *MongoTest) run() {
 
 	fmt.Printf("MongoDB file size: %v -> %v, compression duration %v\n",
 		formatFileSize(sizeBefore), formatFileSize(sizeAfter), compressionDuration)
-	fmt.Printf(TAB+"insertions duration: %v, rows per second: %v\n",
-		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
-	fmt.Printf(TAB+"queries duration: %v, rows per second: %v\n",
-		queriesDuration, humanize.CommafWithDigits(queriesPerSecond, 0))
-	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
-		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
-		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
-	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
-		combinedReadDuration, combinedUpdateDuration)
 }
 
 func (me *MongoTest) runInsertions() time.Duration {
@@ -84,7 +85,7 @@ func (me *MongoTest) runInsertions() time.Duration {
 func (me *MongoTest) writeUsers(users chan *User) {
 	var client *mongo.Client
 	var counter = 0
-	defer me.close(client)
+	defer func() { me.close(client) }()
 	for user := range users {
 		if nil == client {
 			client = me.open()
@@ -121,7 +122,7 @@ func (me *MongoTest) runQueries() time.Duration {
 
 func (me *MongoTest) readUsers(usersChannel chan *User, batchSize int) {
 	var client *mongo.Client
-	defer me.close(client)
+	defer func() { me.close(client) }()
 	var counter = 0
 	for user := range usersChannel {
 		if nil == client {
@@ -183,7 +184,7 @@ func (me *MongoTest) runUpdates() time.Duration {
 
 func (me *MongoTest) updateUsers(users chan *User) {
 	var client *mongo.Client
-	defer me.close(client)
+	defer func() { me.close(client) }()
 	var counter = 0
 	for user := range users {
 		if nil == client {

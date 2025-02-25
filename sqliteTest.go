@@ -54,13 +54,22 @@ func (me *SqliteTest) run() {
 
 	var insertDuration = me.runInserts()
 	var insertionsPerSecond = float64(len(me.users)) / insertDuration.Seconds()
+	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
+		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 
 	var readDuration = me.runQueries()
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
+	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
+		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
 
 	var combinedReadDuration, combinedUpdateDuration = me.runCombined()
 	var combinedReadsPerSecond = float64(len(me.users)) / combinedReadDuration.Seconds()
 	var combinedUpdatesPerSecond = float64(len(me.users)) / combinedUpdateDuration.Seconds()
+	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
+		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
+		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
+	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
+		combinedReadDuration, combinedUpdateDuration)
 
 	var beginning = time.Now()
 	var sizeBefore, sizeAfter = me.compress()
@@ -68,15 +77,6 @@ func (me *SqliteTest) run() {
 
 	fmt.Printf("SQLite file size: %v -> %v, compression duration: %v\n",
 		formatFileSize(sizeBefore), formatFileSize(sizeAfter), compressionDuration)
-	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
-		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
-	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
-		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
-	fmt.Printf(TAB+"combined read & update benchmark: %v reads per second, %v updates per second\n",
-		humanize.CommafWithDigits(combinedReadsPerSecond, 0),
-		humanize.CommafWithDigits(combinedUpdatesPerSecond, 0))
-	fmt.Printf(TAB+TAB+"read duration %v, update duration %v\n",
-		combinedReadDuration, combinedUpdateDuration)
 }
 
 func (me *SqliteTest) runInserts() time.Duration {
@@ -166,7 +166,7 @@ func (me *SqliteTest) runCombined() (readDuration time.Duration, updateDuration 
 
 func (me *SqliteTest) readUsers(users chan *User) {
 	var db *sql.DB
-	defer me.close(db)
+	defer func() { me.close(db) }()
 	var counter = 0
 	for user := range users {
 		if nil == db {
@@ -189,7 +189,7 @@ func (me *SqliteTest) readUsers(users chan *User) {
 
 func (me *SqliteTest) updateUsers(users chan *User) {
 	var db *sql.DB
-	defer me.close(db)
+	defer func() { me.close(db) }()
 	var counter = 0
 	for user := range users {
 		if nil == db {
@@ -205,7 +205,7 @@ func (me *SqliteTest) updateUsers(users chan *User) {
 
 func (me *SqliteTest) writeUsers(users chan *User) {
 	var db *sql.DB
-	defer me.close(db)
+	defer func() { me.close(db) }()
 	var counter = 0
 	for user := range users {
 		if nil == db {
