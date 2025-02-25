@@ -25,21 +25,25 @@ I have been comparing database performance: MongoDB versus SQLite, and here are 
 			* CPU load: 24%
 			* CPU load per 1k operations: 0.264
 	* MongoDB
-		* Storage usage: 162 MB
+		* Storage usage: 100 MB
 			* Uncompressed: 250 MB
 		* Inserts: 15k per second
 			* CPU load: 30%
 				* Client: 15%
 				* Server: 15%
-			* CPU load per 1k operations: 2
+			* CPU load per 1k operations: 2.00
 		* Queries: 13k per second
+			* CPU load: 30%
+				* Client: 15%
+				* Server: 15%
+			* CPU load per 1k operations: 2.31
 		* Simultaneous query and update
-			* Queries: 8k per second
-			* Updates: 8k per second
-			* CPU load: 45%
-				* Client: 25%
-				* Server: 20%
-			* CPU load per 1k operations: 2.81
+			* Queries: 7k per second
+			* Updates: 6k per second
+			* CPU load: 30%
+				* Client: 15%
+				* Server: 15%
+			* CPU load per 1k operations: 2.31
 
 type User struct {
 	name         string
