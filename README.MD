@@ -1,5 +1,18 @@
-Imagine we are going to store data for a web app. Which database performs better: SQLite or MongoDB? I found a few comparisons online, but decided to do my own benchmark anyway.
-I have created a simple data structure for test:
+I have been comparing database performance: MongoDB versus SQLite, and here are the results:
+
+* OrangePi Zero 2W: single board computer with 4 ARM cores and 4 GB of memory
+	* SQLite
+		* Queries: around 5000 rows per second
+		* Inserts: around 3000 rows per second
+		* Simultaneous query and update
+			* Queries: around 8000 rows per second
+			* Updates: around 3000 rows per second
+		* CPU load: around 50%
+	* MongoDB
+		* Queries: around 1400 per second
+		* Inserts: around 1600 per second
+	* CPU load: around 80%
+* Ryzen 5800X3D desktop computer
 
 type User struct {
 	name         string
