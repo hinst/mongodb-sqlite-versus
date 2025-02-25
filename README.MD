@@ -7,7 +7,7 @@ I have been comparing database performance: MongoDB versus SQLite, and here are 
 		* Simultaneous query and update
 			* Queries: around 8000 rows per second
 			* Updates: around 3000 rows per second
-		* CPU load: around 50%
+		* CPU load: around 20%
 	* MongoDB
 		* Queries: around 1400 per second
 		* Inserts: around 1600 per second
