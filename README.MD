@@ -2,15 +2,29 @@ I have been comparing database performance: MongoDB versus SQLite, and here are 
 
 * OrangePi Zero 2W: single board computer with 4 ARM cores and 4 GB of memory
 	* SQLite
-		* Inserts: around 3000 rows per second
-		* Queries: around 5000 rows per second
+		* Inserts: 1.8k per second
+			* CPU load: 20%
+			* CPU load per 1k operations: 11.1
+		* Queries: 23k per second
+			* CPU load: 80%
+			* CPU load per 1k operations: 3.5
 		* Simultaneous query and update
-			* Updates: around 3000 rows per second
-			* Queries: around 8000 rows per second
-		* CPU load: around 20%
-	* MongoDB
-		* Inserts: around 1600 per second
-		* Queries: around 1400 per second
+			* Queries: 11k per second
+			* Updates: 4k per second
+			* CPU load: 50%
+			* CPU load per 1k operations: 3.33
+	* MongoDB, version 6
+		* Inserts: 1.6k per second
+			* CPU load: 80%
+			* CPU load per 1k operations: 50
+		* Queries: 1.5k per second
+			* CPU load: 80%
+			* CPU load per 1k operations: 53.3
+		* Simultaneous query and update
+			* Queries: 0.72k per second
+			* Updates: 0.72k per second
+			* CPU load: 80%
+			* CPU load per 1k operations: 0.56
 	* CPU load: around 80%
 * Ryzen 5800X3D desktop computer with 8 cores and 16 threads
 	* SQLite
@@ -26,7 +40,7 @@ I have been comparing database performance: MongoDB versus SQLite, and here are 
 			* Updates: 31k per second
 			* CPU load: 16%
 			* CPU load per 1k operations: 0.193
-	* MongoDB
+	* MongoDB, version 7
 		* Storage usage: 100 MB
 			* Uncompressed: 250 MB
 		* Inserts: 15k per second
