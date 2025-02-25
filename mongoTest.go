@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const MONGO_DB_URL = "mongodb://localhost:27017"
+const MONGO_DB_URL = "mongodb://localhost:27017/?keepAlive=false"
 
 type MongoTest struct {
 	users       []*User
@@ -39,7 +39,7 @@ func (me *MongoTest) run() {
 	fmt.Printf(TAB+"insertions duration: %v, rows per second: %v\n",
 		insertionsDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 
-	var queriesDuration = me.runQueries()
+	var queriesDuration = me.runQueries(me.threadCount)
 	var queriesPerSecond = float64(len(me.users)) / queriesDuration.Seconds()
 	fmt.Printf(TAB+"queries duration: %v, rows per second: %v\n",
 		queriesDuration, humanize.CommafWithDigits(queriesPerSecond, 0))
@@ -100,11 +100,11 @@ func (me *MongoTest) writeUsers(users chan *User) {
 	}
 }
 
-func (me *MongoTest) runQueries() time.Duration {
+func (me *MongoTest) runQueries(threadCount int) time.Duration {
 	var beginning = time.Now()
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
-	for range me.threadCount {
+	for range threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
@@ -142,30 +142,31 @@ func (me *MongoTest) readUsers(usersChannel chan *User, batchSize int) {
 }
 
 func (me *MongoTest) runCombined() (readDuration time.Duration, updateDuration time.Duration) {
+	var threadCount = max(1, me.threadCount/2)
 	var waitGroup sync.WaitGroup
 
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		updateDuration = me.runUpdates()
+		updateDuration = me.runUpdates(threadCount)
 	}()
 
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		readDuration = me.runQueries()
+		readDuration = me.runQueries(threadCount)
 	}()
 
 	waitGroup.Wait()
 	return readDuration, updateDuration
 }
 
-func (me *MongoTest) runUpdates() time.Duration {
+func (me *MongoTest) runUpdates(threadCount int) time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for range me.threadCount {
+	for range threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()

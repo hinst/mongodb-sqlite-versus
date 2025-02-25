@@ -57,7 +57,7 @@ func (me *SqliteTest) run() {
 	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
 		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 
-	var readDuration = me.runQueries()
+	var readDuration = me.runQueries(me.threadCount)
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
 	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
 		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
@@ -101,12 +101,12 @@ func (me *SqliteTest) runInserts() time.Duration {
 	return elapsed
 }
 
-func (me *SqliteTest) runQueries() time.Duration {
+func (me *SqliteTest) runQueries(threadCount int) time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for range me.threadCount {
+	for range threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
@@ -123,12 +123,12 @@ func (me *SqliteTest) runQueries() time.Duration {
 	return elapsed
 }
 
-func (me *SqliteTest) runUpdates() time.Duration {
+func (me *SqliteTest) runUpdates(threadCount int) time.Duration {
 	var usersChannel = make(chan *User)
 	var waitGroup sync.WaitGroup
 
 	var beginning = time.Now()
-	for range me.threadCount {
+	for range threadCount {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
@@ -146,18 +146,19 @@ func (me *SqliteTest) runUpdates() time.Duration {
 }
 
 func (me *SqliteTest) runCombined() (readDuration time.Duration, updateDuration time.Duration) {
+	var threadCount = max(1, me.threadCount/2)
 	var waitGroup sync.WaitGroup
 
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		updateDuration = me.runUpdates()
+		updateDuration = me.runUpdates(threadCount)
 	}()
 
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		readDuration = me.runQueries()
+		readDuration = me.runQueries(threadCount)
 	}()
 
 	waitGroup.Wait()
