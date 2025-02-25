@@ -57,7 +57,7 @@ func (me *SqliteTest) run() {
 	fmt.Printf(TAB+"insertion duration: %v, rows per second: %v\n",
 		insertDuration, humanize.CommafWithDigits(insertionsPerSecond, 0))
 
-	var readDuration = me.runQueries(me.threadCount)
+	var readDuration = me.runQueriesLoop(me.threadCount)
 	var readsPerSecond = float64(len(me.users)) / readDuration.Seconds()
 	fmt.Printf(TAB+"reading duration: %v, rows per second: %v\n",
 		readDuration, humanize.CommafWithDigits(readsPerSecond, 0))
@@ -99,6 +99,16 @@ func (me *SqliteTest) runInserts() time.Duration {
 	var elapsed = time.Since(beginning)
 
 	return elapsed
+}
+
+// Reading in SQLite is too fast when nobody is writing
+func (me *SqliteTest) runQueriesLoop(threadCount int) time.Duration {
+	const count = 10
+	var totalDuration time.Duration
+	for range count {
+		totalDuration += me.runQueries(threadCount)
+	}
+	return totalDuration / count
 }
 
 func (me *SqliteTest) runQueries(threadCount int) time.Duration {
