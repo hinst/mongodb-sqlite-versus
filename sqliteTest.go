@@ -13,6 +13,7 @@ import (
 )
 
 const DB_FILE_PATH = "./test-sqlite.db"
+const LIBSQL_URL = "libsql://localhost:8080"
 const DB_TIMEOUT = 60 * 60 * 1000
 
 type SqliteTest struct {

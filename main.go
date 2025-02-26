@@ -7,6 +7,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
 var testers = map[string](func(users []*User, batchSize int, threadCount int)){

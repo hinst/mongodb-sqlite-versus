@@ -3,6 +3,7 @@
         "AUTOINCREMENT",
         "bson",
         "github",
+        "libsql",
         "mongodb",
         "Ryzen",
         "sqlite",
