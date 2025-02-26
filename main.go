@@ -33,7 +33,7 @@ func main() {
 	const batchSize = 100
 	var testKey = flag.String("test", "sqlite", getTesterKeys())
 	var threadCount = flag.Int("threads", 1, "thread count")
-	var rowCount = flag.Int("rows", 1_000_000, "row count")
+	var rowCount = flag.Int("rows", 100_000, "row count")
 	flag.Parse()
 	var tester = testers[*testKey]
 	assertCondition(tester != nil, "Invalid tester key: "+*testKey)

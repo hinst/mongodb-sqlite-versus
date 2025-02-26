@@ -2,10 +2,22 @@ I have been benchmarking SQLite versus MongoDB as my side project https://github
 
 * SQLite is much faster than MongoDB: around 6x...10x times faster
     * The only favorable test benchmark for MongoDB is concurrent insertions. Meanwhile, SQLite seems to struggle with parallel insertions.
-* SQLite uses CPU power than MongoDB: around 7x...8x more efficient
-* MongoDB uses less storage space than SQLite, thanks to zstd compression
-	* Enabling zstd compression significantly reduces storage usage, and has a negligible impact on performance
+* SQLite uses less CPU power than MongoDB: around 7x...8x more efficient
+* MongoDB uses less storage space than SQLite, thanks to zstd compression: -65% storage usage
+	* Enabling zstd compression has a negligible impact on CPU usage
 	* With compression disabled, SQLite wins in storage usage
+* MongoDB scales better with more CPU power and concurrent connections: +10%...+20% scaling
+	* Insertions are special case in SQLite: they are limited to one thread and do not scale at all
+
+|                      | SQLite          | MongoDB     |
+| -------------------- | --------------- | ----------- |
+| Speed                | 6x...10x faster |             |
+| CPU usage            | 7x...8x less    |             |
+| Storage uncompressed | -50% less       |             |
+| Storage usage        |                 | -65% less   |
+| Thread scaling       |                 | +10%...+20% |
+| Insertions scaling   | no              | yes         |
+
 
 TEST CONDITIONS
 * Parallel threads: 4
@@ -85,3 +97,21 @@ Data structure used for test:
 		accessToken  string
 	}
 
+THREAD SCALING
+* Ryzen 5800X3D desktop
+	* SQLite
+		* 3 threads -> 6 threads
+			* insertions: +4% throughput
+			* queries: +44% throughput
+			* combined queries: +87% throughput
+			* combined updates: +77% throughput
+		* Average +53% throughput
+			* +69% excluding insertions
+	* MongoDB
+		* 3 threads -> 6 threads
+			* insertions: +44% throughput
+			* queries: +44% throughput
+			* combined queries: +98% throughput
+			* combined updates: +101% throughput
+		* Average +72% throughput
+			* +81% excluding insertions
