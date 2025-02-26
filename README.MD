@@ -9,14 +9,14 @@ I have been benchmarking SQLite versus MongoDB as my side project https://github
 * MongoDB scales better with more CPU power and concurrent connections: +10%...+20% scaling
 	* Insertions are special case in SQLite: they are limited to one thread and do not scale at all
 
-|                      | SQLite          | MongoDB     |
-| -------------------- | --------------- | ----------- |
-| Speed                | 6x...10x faster |             |
-| CPU usage            | 7x...8x less    |             |
-| Storage uncompressed | -50% less       |             |
-| Storage usage        |                 | -65% less   |
-| Thread scaling       |                 | +10%...+20% |
-| Insertions scaling   | no              | yes         |
+|                      | SQLite            | MongoDB       |
+| -------------------- | ----------------- | ------------- |
+| Speed                | ✅ 6x...10x faster |               |
+| CPU usage            | ✅ 7x...8x less    |               |
+| Storage uncompressed | ✅ -50% less       |               |
+| Storage usage        |                   | ✅ -65% less   |
+| Thread scaling       |                   | ✅ +10%...+20% |
+| Insertions scaling   | no                | ✅ yes         |
 
 
 TEST CONDITIONS
