@@ -25,6 +25,17 @@ TEST CONDITIONS
 * SQLite journal mode: WAL
 * MongoDB compression: zstd
 
+HARDWARE
+* Orange Pi Zero 2W
+  * 4 ARM cores
+  * 4 GB memory
+  * 256 GB SD card, Blitzwolf
+* Ryzen 5800X3D desktop computer
+  * 8 cores
+  * 16 threads
+  * 64 GB memory
+  * 1 TB NVMe SSD, Western Digital
+
 TEST RESULTS
 * Ryzen 5800X3D desktop computer with 8 cores and 16 threads
 	* SQLite
@@ -91,10 +102,10 @@ Data structure used for test:
 	type User struct {
 		name         string
 		passwordHash string
+		accessToken  string
 		email        string
 		createdAt    dateTime
 		level        int
-		accessToken  string
 	}
 
 THREAD SCALING
