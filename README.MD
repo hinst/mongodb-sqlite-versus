@@ -1,4 +1,4 @@
-I have been benchmarking SQLite versus MongoDB as my side project. Here are the results:
+I have been benchmarking SQLite and MongoDB as my side project. Here are the results:
 
 * SQLite is much faster: around 6x...10x times faster than MongoDB
     * The only favorable benchmark for MongoDB is concurrent insertions
