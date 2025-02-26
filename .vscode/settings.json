@@ -3,6 +3,8 @@
         "AUTOINCREMENT",
         "bson",
         "mongodb",
-        "sqlite"
+        "Ryzen",
+        "sqlite",
+        "zstd"
     ]
 }

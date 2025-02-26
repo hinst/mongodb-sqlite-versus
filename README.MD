@@ -1,11 +1,19 @@
-SQLite versus MongoDB benchmark
+I have been benchmarking SQLite versus MongoDB as my side project https://github.com/hinst/mongodb-sqlite-versus and here are the results:
 
-Preconditions:
+* SQLite is much faster than MongoDB: around 6x...10x times faster
+    * The only favorable test benchmark for MongoDB is concurrent insertions. Meanwhile, SQLite seems to struggle with parallel insertions.
+* SQLite uses CPU power than MongoDB: around 7x...8x more efficient
+* MongoDB uses less storage space than SQLite, thanks to zstd compression
+	* Enabling zstd compression significantly reduces storage usage, and has a negligible impact on performance
+	* With compression disabled, SQLite wins in storage usage
+
+TEST CONDITIONS
 * Parallel threads: 4
 * Batch size: 100 rows
 * SQLite journal mode: WAL
 * MongoDB compression: zstd
 
+TEST RESULTS
 * Ryzen 5800X3D desktop computer with 8 cores and 16 threads
 	* SQLite
 		* Storage usage: 165 MB
