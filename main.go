@@ -15,7 +15,10 @@ var testers = map[string](func(users []*User, batchSize int, threadCount int)){
 		testJson(users)
 	},
 	"sqlite": func(users []*User, batchSize int, threadCount int) {
-		(&SqliteTest{users, batchSize, threadCount}).run()
+		(&SqliteTest{users, batchSize, threadCount, SQLITE_TEST_MODE_FILE}).run()
+	},
+	"libsql": func(users []*User, batchSize int, threadCount int) {
+		(&SqliteTest{users, batchSize, threadCount, SQLITE_TEST_MODE_HTTP}).run()
 	},
 	"mongo": func(users []*User, batchSize int, threadCount int) {
 		(&MongoTest{users, batchSize, threadCount}).run()

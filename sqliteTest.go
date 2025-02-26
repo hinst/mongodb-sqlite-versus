@@ -13,13 +13,16 @@ import (
 )
 
 const DB_FILE_PATH = "./test-sqlite.db"
-const LIBSQL_URL = "libsql://localhost:8080"
+const LIBSQL_URL = "http://localhost:8088"
 const DB_TIMEOUT = 60 * 60 * 1000
+const SQLITE_TEST_MODE_FILE = 0
+const SQLITE_TEST_MODE_HTTP = 1
 
 type SqliteTest struct {
 	users       []*User
 	batchSize   int
 	threadCount int
+	mode        int
 }
 
 func (me *SqliteTest) prepare() {
@@ -39,8 +42,18 @@ func (me *SqliteTest) prepare() {
 }
 
 func (me *SqliteTest) open() *sql.DB {
-	return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+
-		"?_journal_mode=WAL&_busy_timeout="+strconv.Itoa(DB_TIMEOUT)))
+	switch me.mode {
+	case SQLITE_TEST_MODE_FILE:
+		return assertResultError(sql.Open("sqlite3", "file:"+DB_FILE_PATH+
+			"?_journal_mode=WAL&_busy_timeout="+strconv.Itoa(DB_TIMEOUT)))
+	case SQLITE_TEST_MODE_HTTP:
+		var db = assertResultError(sql.Open("libsql", LIBSQL_URL))
+		db.Exec("PRAGMA journal_mode=WAL;")
+		db.Exec("PRAGMA busy_timeout=" + strconv.Itoa(DB_TIMEOUT) + ";")
+		return db
+	default:
+		panic("Unknown mode: " + strconv.Itoa(me.mode))
+	}
 }
 
 func (me *SqliteTest) close(db *sql.DB) *sql.DB {
@@ -236,11 +249,22 @@ func (me *SqliteTest) writeUsers(users chan *User) {
 func (me *SqliteTest) compress() (int64, int64) {
 	var db = me.open()
 	defer me.close(db)
-	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
-	var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
-	assertResultError(db.Exec("VACUUM;"))
-	assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
 
-	var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
-	return sizeBeforeVacuum, sizeAfterVacuum
+	switch me.mode {
+	case SQLITE_TEST_MODE_FILE:
+		assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
+		var sizeBeforeVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
+		assertResultError(db.Exec("VACUUM;"))
+		assertResultError(db.Exec("PRAGMA wal_checkpoint(TRUNCATE);"))
+
+		var sizeAfterVacuum = assertResultError(os.Stat(DB_FILE_PATH)).Size()
+		return sizeBeforeVacuum, sizeAfterVacuum
+	case SQLITE_TEST_MODE_HTTP:
+		var row = db.QueryRow("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size();")
+		var size int64
+		assertError(row.Scan(&size))
+		return size, size
+	default:
+		panic("Unknown mode: " + strconv.Itoa(me.mode))
+	}
 }
