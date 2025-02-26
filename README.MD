@@ -1,22 +1,22 @@
-I have been benchmarking SQLite versus MongoDB as my side project https://github.com/hinst/mongodb-sqlite-versus and here are the results:
+I have been benchmarking SQLite versus MongoDB as my side project. Here are the results:
 
 * SQLite is much faster than MongoDB: around 6x...10x times faster
-    * The only favorable test benchmark for MongoDB is concurrent insertions. Meanwhile, SQLite seems to struggle with parallel insertions.
+    * The only favorable test benchmark for MongoDB is concurrent insertions
 * SQLite uses less CPU power than MongoDB: around 7x...8x more efficient
 * MongoDB uses less storage space than SQLite, thanks to zstd compression: -65% storage usage
 	* Enabling zstd compression has a negligible impact on CPU usage
 	* With compression disabled, SQLite wins in storage usage
-* MongoDB scales better with more CPU power and concurrent connections: +10%...+20% scaling
+* MongoDB scales better with more CPU power and concurrent connections: +10%...+20% more scaling
 	* Insertions are special case in SQLite: they are limited to one thread and do not scale at all
 
-|                      | SQLite            | MongoDB       |
-| -------------------- | ----------------- | ------------- |
-| Speed                | ✅ 6x...10x faster |               |
-| CPU usage            | ✅ 7x...8x less    |               |
-| Storage uncompressed | ✅ -50% less       |               |
-| Storage usage        |                   | ✅ -65% less   |
-| Thread scaling       |                   | ✅ +10%...+20% |
-| Insertions scaling   | no                | ✅ yes         |
+|                      | SQLite            | MongoDB     |
+| -------------------- | ----------------- | ----------- |
+| Speed                | ✅ 6x...10x faster |             |
+| CPU usage            | ✅ 7x...8x less    |             |
+| Storage uncompressed | ✅ -50% less       |             |
+| Storage usage        |                   | ✅ -65% less |
+| Thread scaling       | 1.69x             | ✅ 1.81x     |
+| Insertions scaling   | no                | ✅ yes       |
 
 
 TEST CONDITIONS
@@ -99,19 +99,19 @@ Data structure used for test:
 
 THREAD SCALING
 * Ryzen 5800X3D desktop
-	* SQLite
-		* 3 threads -> 6 threads
+	* SQLite: 3 threads -> 6 threads
 			* insertions: +4% throughput
 			* queries: +44% throughput
 			* combined queries: +87% throughput
 			* combined updates: +77% throughput
 		* Average +53% throughput
 			* +69% excluding insertions
-	* MongoDB
-		* 3 threads -> 6 threads
+	* MongoDB: 3 threads -> 6 threads
 			* insertions: +44% throughput
 			* queries: +44% throughput
 			* combined queries: +98% throughput
 			* combined updates: +101% throughput
 		* Average +72% throughput
 			* +81% excluding insertions
+
+Full source code: https://github.com/hinst/mongodb-sqlite-versus
